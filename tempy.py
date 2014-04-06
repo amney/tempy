@@ -67,7 +67,7 @@ class LEDArray(object):
 
 @app.route('/')
 def hello_world():
-    with sqlite3.connect('/Users/tigarner/PycharmProjects/tempy/temps.db') as conn:
+    with sqlite3.connect('/home/pi/tempy/temps.db') as conn:
         c = conn.cursor()
 
         c.execute('SELECT * FROM temps')
@@ -83,7 +83,7 @@ def temp_loop():
     try:
         while True:
             temperature = temperature_sensor.get_current_temp()
-            with sqlite3.connect('/Users/tigarner/PycharmProjects/tempy/temps.db') as conn:
+            with sqlite3.connect('/home/pi/tempy/temps.db') as conn:
                 c = conn.cursor()
 
                 try:
