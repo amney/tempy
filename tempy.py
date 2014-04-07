@@ -73,12 +73,17 @@ class LEDArray(object):
 @app.route('/')
 def hello_world():
     now = int(time.time())
+    hour = now - (60 * 60)
     twenty_four_hours = now - (60 * 60 * 24)
     one_week = now - (60 * 60 * 24 * 7)
     four_weeks = now - (60 * 60 * 24 * 7 * 4)
 
     with sqlite3.connect(os.path.join(dir, 'temps.db')) as conn:
         c = conn.cursor()
+
+        c.execute('SELECT * FROM temps WHERE datetime >= ?', (hour,))
+        rows = c.fetchall()
+        results_hour = [{'x': row[0], 'y': row[1]} for row in rows]
 
         c.execute('SELECT * FROM temps WHERE datetime >= ?', (twenty_four_hours,))
         rows = c.fetchall()
@@ -92,8 +97,11 @@ def hello_world():
         rows = c.fetchall()
         results_four_weeks = [{'x': row[0], 'y': row[1]} for row in rows]
 
-    return render_template('index.html', results_twenty_four_hours=results_twenty_four_hours,
-                           results_one_week=results_one_week, results_four_weeks=results_four_weeks)
+    return render_template('index.html',
+                           results_hour=results_hour,
+                           results_twenty_four_hours=results_twenty_four_hours,
+                           results_one_week=results_one_week,
+                           results_four_weeks=results_four_weeks)
 
 
 def temp_loop():
