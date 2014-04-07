@@ -102,7 +102,11 @@ def hello_world():
         rows = c.fetchall()
         results_four_weeks = [{'x': row[0], 'y': row[1]} for row in rows]
 
+        c.execute('SELECT * FROM temps ORDER BY datetime DESC LIMIT 1')
+        temp = c.fetchone()[1]
+
     return render_template('index.html',
+                           temp=temp,
                            results_hour=results_hour,
                            results_twenty_four_hours=results_twenty_four_hours,
                            results_one_week=results_one_week,
