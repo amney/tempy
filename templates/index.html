@@ -18,6 +18,23 @@
 
     <!-- Latest compiled and minified JavaScript -->
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <style type="text/css">
+        #chart_container {
+            position: relative;
+        }
+
+        #chart0 {
+            position: relative;
+            left: 40px;
+        }
+
+        #y_axis {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+        }
+    </style>
 </head>
 <body style="padding-top: 70px">
 
@@ -59,18 +76,25 @@
         <p>Currently brewing an Irish Stout</p>
 
         <h3>Hour</h3>
-        <div id="chart0"></div>
+
+        <div id="chart_container">
+            <div id="y_axis"></div>
+            <div id="chart0"></div>
+        </div>
         <hr>
 
         <h3>Day</h3>
+
         <div id="chart1"></div>
         <hr>
 
         <h3>Week</h3>
+
         <div id="chart2"></div>
         <hr>
 
         <h3>Month</h3>
+
         <div id="chart3"></div>
         <hr>
     </div>
@@ -97,7 +121,13 @@
     });
 
     var axes0 = new Rickshaw.Graph.Axis.Time({ graph: graph0 });
-    var yAxis0 = new Rickshaw.Graph.Axis.Y({ graph: graph0 });
+    var yAxis0 = new Rickshaw.Graph.Axis.Y({
+        graph: graph0,
+        orientation: 'left',
+        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+        ticks: 5,
+        element: document.getElementById('y_axis')
+    });
     var hoverDetail = new Rickshaw.Graph.HoverDetail({ graph: graph0 });
 
 
