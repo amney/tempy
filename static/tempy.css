@@ -1,0 +1,46 @@
+body {
+    padding-top: 70px;
+}
+.chart_container {
+    position: relative;
+}
+#chart0 {
+    position: relative;
+    left: 40px;
+}
+#y_axis0 {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+}
+#chart1 {
+    position: relative;
+    left: 40px;
+}
+#y_axis1 {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+}
+#chart2 {
+    position: relative;
+    left: 40px;
+}
+#y_axis2 {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+}
+#chart3 {
+    position: relative;
+    left: 40px;
+}
+#y_axis3 {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+}

@@ -6,69 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>Tempy - handrolled brew temperature monitor</title>
+
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='rickshaw.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tempy.css') }}">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+
     <script src="{{ url_for('static', filename='vendor/d3.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/d3.layout.min.js') }}"></script>
     <script src="{{ url_for('static', filename='rickshaw.js') }}"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-
-    <!-- Optional theme -->
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
-
-    <!-- Latest compiled and minified JavaScript -->
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-    <style type="text/css">
-        .chart_container {
-            position: relative;
-        }
-        #chart0 {
-            position: relative;
-            left: 40px;
-        }
-        #y_axis0 {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 40px;
-        }
-        #chart1 {
-            position: relative;
-            left: 40px;
-        }
-        #y_axis1 {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 40px;
-        }
-        #chart2 {
-            position: relative;
-            left: 40px;
-        }
-        #y_axis2 {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 40px;
-        }
-        #chart3 {
-            position: relative;
-            left: 40px;
-        }
-        #y_axis3 {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 40px;
-        }
-    </style>
 </head>
-<body style="padding-top: 70px">
+<body>
 
-
-<!-- Fixed navbar -->
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
     <div class="container">
         <div class="navbar-header">
@@ -82,32 +33,28 @@
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-                <li><a href="#">Last Hour</a></li>
-                <li><a href="#">Today</a></li>
-                <li><a href="#">Week</a></li>
-                <li><a href="#">Month</a></li>
+                <li><a href="#chart0">Last Hour</a></li>
+                <li><a href="#chart1">Today</a></li>
+                <li><a href="#chart2">Week</a></li>
+                <li><a href="#chart3">Month</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <li><a href="#">Current Temp: {{ temp }}c</a></li>
                 <li><a href="#">About</a></li>
             </ul>
         </div>
-        <!--/.nav-collapse -->
     </div>
 </div>
 
 <div class="container">
 
-    <!-- Main component for a primary marketing message or call to action -->
     <div class="jumbotron">
-        <h1>Tempy</h1>
-        <p style="font-size: 1em;"><em>Handrolled brew temperature monior</em></p>
-        <br>
-        <h4>Currently brewing an Irish Stout</h4>
-        <ul>
-        <li>Brewdate: 06/04/2014</li>
-        <li>OG: 1.062</li>
-        </ul>
+        <h1>Tempy <img class="pull-right" src="{{ url_for('static', filename='beer.png') }}"></h1>
+
+
+        <p style="font-size: 1em;"><em>Handrolled brew temperature monitor</em></p>
+
+        <h4>Currently brewing an Irish Stout. <span style="font-weight: normal">Brewdate: 06/04/2014. OG: 1.062</span></h4>
         <br>
 
         <h3>Hour</h3>
@@ -135,6 +82,7 @@
         <hr>
 
         <h3>Month</h3>
+
         <div class="chart_container">
             <div id="y_axis3"></div>
             <div id="chart3"></div>

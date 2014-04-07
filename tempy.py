@@ -1,11 +1,7 @@
 import os
 import sqlite3
-from threading import Thread
-import threading
 import time
 import thread
-from concurrent.futures import ThreadPoolExecutor
-
 import re
 import logging
 
@@ -16,7 +12,6 @@ try:
     import RPi.GPIO as GPIO
 except ImportError:
     from mock import Mock
-
     GPIO = Mock()
 
 app = Flask(__name__)
@@ -35,7 +30,7 @@ class TemperatureSensor(object):
     def get_current_temp(self):
         with open(self.device) as tfile:
             text = tfile.read()
-        temperature = float(re.search('t=(\d+)', text).group(1))
+        temperature = float(re.search(r't=(\d+)', text).group(1))
         return temperature / 1000
 
 
@@ -72,7 +67,7 @@ class LEDArray(object):
 
 
 @app.route('/')
-def hello_world():
+def tempy():
     now = int(time.time())
     hour = now - (60 * 60)
     twenty_four_hours = now - (60 * 60 * 24)
@@ -112,58 +107,62 @@ def hello_world():
                            results_twenty_four_hours=results_twenty_four_hours,
                            results_one_week=results_one_week,
                            results_four_weeks=results_four_weeks)
+
+
 def run():
-    with threading.Lock() as lock:
-        print "hello"
-        logging.info('Starting temp polling loop')
-        temperature_sensor = TemperatureSensor(device="/sys/bus/w1/devices/28-0000055d0eac/w1_slave")
-        led_array = LEDArray()
+    logging.info('Starting temp polling loop')
+    temperature_sensor = TemperatureSensor(device="/sys/bus/w1/devices/28-0000055d0eac/w1_slave")
+    led_array = LEDArray()
 
-        try:
-            while True:
+    try:
+        while True:
+            # Try get the temperature - IOError will be raised if not running on the Pi
+            try:
+                temperature = temperature_sensor.get_current_temp()
+            except IOError:
+                logging.warning("Couldn't pull current temp")
+                temperature = 0
+
+            # Deal with updating the database
+            with sqlite3.connect(os.path.join(filedir, 'temps.db')) as conn:
+                c = conn.cursor()
                 try:
-                    temperature = temperature_sensor.get_current_temp()
-                except IOError:
-                    logging.warning("Couldn't pull current temp")
-                    temperature = 0
-                with sqlite3.connect(os.path.join(filedir, 'temps.db')) as conn:
-                    c = conn.cursor()
+                    c.execute('CREATE TABLE temps (datetime integer, temp real)')
+                except sqlite3.OperationalError:
+                    pass
 
-                    try:
-                        c.execute('CREATE TABLE temps (datetime integer, temp real)')
-                    except sqlite3.OperationalError:
-                        pass
+                c.execute('INSERT INTO temps VALUES (?, ?)', (int(time.time()), temperature))
+                conn.commit()
 
-                    c.execute('INSERT INTO temps VALUES (?, ?)', (int(time.time()), temperature))
+            # Deal with updating the raspberry pi's LEDs
+            rounded_temp = int(temperature)
+            if 23 > temperature < 18:
+                led_array.blank()
+                led_array.red()
+                if (14 <= rounded_temp <= 16) or (25 <= rounded_temp <= 27):
+                    led_array.yellow_led_1()
+                if rounded_temp <= 13 or rounded_temp >= 28:
+                    led_array.yellow_led_1()
+                    led_array.yellow_led_2()
+                logging.warn("Temp at {}c -- outside stable band 18-23c".format(temperature))
+            else:
+                led_array.blank()
+                led_array.green()
+                if 20 <= rounded_temp <= 21:
+                    led_array.yellow_led_1()
+                if rounded_temp >= 22:
+                    led_array.yellow_led_1()
+                    led_array.yellow_led_2()
+                logging.info("Temp at {}c".format(temperature))
 
-                    conn.commit()
-
-                rounded_temp = int(temperature)
-                if 23 > temperature < 18:
-                    led_array.blank()
-                    led_array.red()
-                    if (14 <= rounded_temp <= 16) or (25 <= rounded_temp <= 27):
-                        led_array.yellow_led_1()
-                    if rounded_temp <= 13 or rounded_temp >= 28:
-                        led_array.yellow_led_1()
-                        led_array.yellow_led_2()
-                    logging.warn("Temp at {}c -- outside stable band 18-23c".format(temperature))
-                else:
-                    led_array.blank()
-                    led_array.green()
-                    if 20 <= rounded_temp <= 21:
-                        led_array.yellow_led_1()
-                    if rounded_temp >= 22:
-                        led_array.yellow_led_1()
-                        led_array.yellow_led_2()
-                    logging.info("Temp at {}c".format(temperature))
-                time.sleep(30)
-        except KeyboardInterrupt:
-            logging.info("Logging finished")
-            GPIO.cleanup()
+            time.sleep(30)
+    finally:
+        logging.info("Logging finished")
+        GPIO.cleanup()
 
 
 if __name__ == '__main__':
     thread.start_new_thread(run, ())
+    # Must run with debug=False as if set to True Flask will import this file twice - starting two 'run' threads
     app.run(debug=False, host='0.0.0.0')
 
