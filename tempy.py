@@ -83,19 +83,23 @@ def hello_world():
 
         c.execute('SELECT * FROM temps WHERE datetime >= ?', (hour,))
         rows = c.fetchall()
-        results_hour = [{'x': row[0], 'y': row[1]} for row in rows]
+        results_hour = [{'x': row[0], 'y': row[1]} for row in rows if row[0] %
+                2 == 0]
 
         c.execute('SELECT * FROM temps WHERE datetime >= ?', (twenty_four_hours,))
         rows = c.fetchall()
-        results_twenty_four_hours = [{'x': row[0], 'y': row[1]} for row in rows]
+        results_twenty_four_hours = [{'x': row[0], 'y': row[1]} for row in rows
+                if row[0] % 10 == 0]
 
         c.execute('SELECT * FROM temps WHERE datetime >= ?', (one_week,))
         rows = c.fetchall()
-        results_one_week = [{'x': row[0], 'y': row[1]} for row in rows]
+        results_one_week = [{'x': row[0], 'y': row[1]} for row in rows if
+                row[0] % 50 == 0]
 
         c.execute('SELECT * FROM temps WHERE datetime >= ?', (four_weeks, ))
         rows = c.fetchall()
-        results_four_weeks = [{'x': row[0], 'y': row[1]} for row in rows]
+        results_four_weeks = [{'x': row[0], 'y': row[1]} for row in rows if
+                row[0] % 200 == 0]
 
     return render_template('index.html',
                            results_hour=results_hour,
