@@ -4,11 +4,18 @@
 <script src="{{ url_for('static', filename='vendor/d3.layout.min.js') }}"></script>
 <script src="{{ url_for('static', filename='rickshaw.js') }}"></script>
 
-<div id="chart"></div>
+<h3>Day</h3>
+<div id="chart1"></div>
+<h3>Week</h3>
+<div id="chart2"></div>
+<h3>Month</h3>
+<div id="chart3"></div>
 
 <script>
 
-    var data = {{ l|tojson|safe }};
+    var data1 = {{ results_twenty_four_hours|tojson|safe }};
+    var data2 = {{ results_one_week|tojson|safe }};
+    var data3 = {{ results_four_weeks|tojson|safe }};
 
     {#    var unit = {};#}
     {#    unit.formatTime = function (d) {#}
@@ -20,23 +27,51 @@
     {#    unit.name = "30 seconds";#}
     {#    unit.seconds = 30;#}
 
-    var graph = new Rickshaw.Graph({
-        element: document.querySelector("#chart"),
+    var graph1 = new Rickshaw.Graph({
+        element: document.querySelector("#chart1"),
         width: 580,
         height: 250,
         series: [
             {
                 color: 'steelblue',
-                data: data
+                data: data1
             }
         ]
     });
 
-    var axes = new Rickshaw.Graph.Axis.Time({ graph: graph,
-        {#        timeUnit: unit,#}
-        {#        timeFixture: new Rickshaw.Fixtures.Time.Local()#}
+    var axes1 = new Rickshaw.Graph.Axis.Time({ graph: graph1 });
+
+    graph1.render();
+
+    var graph2 = new Rickshaw.Graph({
+        element: document.querySelector("#chart2"),
+        width: 580,
+        height: 250,
+        series: [
+            {
+                color: 'steelblue',
+                data: data2
+            }
+        ]
     });
 
-    graph.render();
+    var axes2 = new Rickshaw.Graph.Axis.Time({ graph: graph2 });
 
+    graph2.render();
+
+    var graph3 = new Rickshaw.Graph({
+        element: document.querySelector("#chart3"),
+        width: 580,
+        height: 250,
+        series: [
+            {
+                color: 'steelblue',
+                data: data3
+            }
+        ]
+    });
+
+    var axes3 = new Rickshaw.Graph.Axis.Time({ graph: graph3 });
+
+    graph3.render();
 </script>

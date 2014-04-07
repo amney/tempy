@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import time
 import thread
@@ -6,16 +7,18 @@ import logging
 
 from flask import Flask, render_template
 
+
 try:
     import RPi.GPIO as GPIO
 except ImportError:
     from mock import Mock
+
     GPIO = Mock()
 
-
 app = Flask(__name__)
+dir = os.path.dirname(os.path.realpath(__file__))
 
-logging.basicConfig(filename="/home/pi/brew-temps.log", level=logging.INFO)
+logging.basicConfig(filename=os.path.join(dir, 'tempy.log'), level=logging.INFO)
 console = logging.StreamHandler()
 console.setLevel(logging.INFO)
 logging.getLogger('').addHandler(console)
@@ -26,11 +29,13 @@ class TemperatureSensor(object):
         self.device = device
 
     def get_current_temp(self):
-        with open(self.device) as tfile:
-            text = tfile.read()
-        temperature = float(re.search('t=(\d+)', text).group(1))
-        temperature /= 1000
-        return temperature
+        try:
+            with open(self.device) as tfile:
+                text = tfile.read()
+            temperature = float(re.search('t=(\d+)', text).group(1))
+            return temperature / 1000
+        except IOError:
+            return -1
 
 
 class LEDArray(object):
@@ -67,23 +72,39 @@ class LEDArray(object):
 
 @app.route('/')
 def hello_world():
-    with sqlite3.connect('/home/pi/tempy/temps.db') as conn:
+    now = int(time.time())
+    twenty_four_hours = now - (60 * 60 * 24)
+    one_week = now - (60 * 60 * 24 * 7)
+    four_weeks = now - (60 * 60 * 24 * 7 * 4)
+
+    with sqlite3.connect(os.path.join(dir, 'temps.db')) as conn:
         c = conn.cursor()
 
-        c.execute('SELECT * FROM temps')
+        c.execute('SELECT * FROM temps WHERE datetime >= ?', (twenty_four_hours,))
         rows = c.fetchall()
-        results = [{'x': row[0], 'y': row[1]} for row in rows]
-    return render_template('index.html', l=results)
+        results_twenty_four_hours = [{'x': row[0], 'y': row[1]} for row in rows]
+
+        c.execute('SELECT * FROM temps WHERE datetime >= ?', (one_week,))
+        rows = c.fetchall()
+        results_one_week = [{'x': row[0], 'y': row[1]} for row in rows]
+
+        c.execute('SELECT * FROM temps WHERE datetime >= ?', (four_weeks, ))
+        rows = c.fetchall()
+        results_four_weeks = [{'x': row[0], 'y': row[1]} for row in rows]
+
+    return render_template('index.html', results_twenty_four_hours=results_twenty_four_hours,
+                           results_one_week=results_one_week, results_four_weeks=results_four_weeks)
 
 
 def temp_loop():
+    logging.info('Starting temp polling loop')
     temperature_sensor = TemperatureSensor(device="/sys/bus/w1/devices/28-0000055d0eac/w1_slave")
     led_array = LEDArray()
 
     try:
         while True:
             temperature = temperature_sensor.get_current_temp()
-            with sqlite3.connect('/home/pi/tempy/temps.db') as conn:
+            with sqlite3.connect(os.path.join(dir, 'temps.db')) as conn:
                 c = conn.cursor()
 
                 try:
@@ -91,7 +112,7 @@ def temp_loop():
                 except sqlite3.OperationalError:
                     pass
 
-                c.execute('INSERT INTO temps VALUES (?, ?)', (int(time.time()),temperature))
+                c.execute('INSERT INTO temps VALUES (?, ?)', (int(time.time()), temperature))
 
                 conn.commit()
 
