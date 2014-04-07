@@ -90,6 +90,9 @@ def temp_loop():
                     c.execute('CREATE TABLE temps (datetime integer, temp real)')
                 except sqlite3.OperationalError:
                     pass
+
+                c.execute('INSERT INTO temps VALUES (?, ?)', (int(time.time()),temperature))
+
                 conn.commit()
 
             rounded_temp = int(temperature)
@@ -119,4 +122,4 @@ def temp_loop():
 
 if __name__ == '__main__':
     thread.start_new_thread(temp_loop, ())
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
