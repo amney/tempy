@@ -43,6 +43,26 @@
             bottom: 0;
             width: 40px;
         }
+        #chart2 {
+            position: relative;
+            left: 40px;
+        }
+        #y_axis2 {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+        }
+        #chart3 {
+            position: relative;
+            left: 40px;
+        }
+        #y_axis3 {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+        }
     </style>
 </head>
 <body style="padding-top: 70px">
@@ -108,12 +128,18 @@
 
         <h3>Week</h3>
 
-        <div id="chart2"></div>
+        <div class="chart_container">
+            <div id="y_axis2"></div>
+            <div id="chart2"></div>
+        </div>
         <hr>
 
         <h3>Month</h3>
+        <div class="chart_container">
+            <div id="y_axis3"></div>
+            <div id="chart3"></div>
+        </div>
 
-        <div id="chart3"></div>
         <hr>
 
         <p style="font-size: 1em">&copy;Tim Garner - <a href="http://tim-garner.co.uk/">tim-garner.co.uk</a></p>
@@ -188,6 +214,9 @@
         element: document.querySelector("#chart2"),
         width: 580,
         height: 250,
+        max: 35,
+        renderer: 'area',
+        stroke: true,
         series: [
             {
                 color: 'steelblue',
@@ -197,8 +226,14 @@
         ]
     });
 
-    var axes2 = new Rickshaw.Graph.Axis.Time({ graph: graph2 });
-    var yAxis2 = new Rickshaw.Graph.Axis.Y({ graph: graph2 });
+    var xAxis2 = new Rickshaw.Graph.Axis.Time({ graph: graph2 });
+    var yAxis2 = new Rickshaw.Graph.Axis.Y({
+        graph: graph2,
+        orientation: 'left',
+        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+        ticks: 8,
+        element: document.getElementById('y_axis2')
+    });
     var hoverDetail2 = new Rickshaw.Graph.HoverDetail({ graph: graph2 });
 
     graph2.render();
@@ -207,6 +242,9 @@
         element: document.querySelector("#chart3"),
         width: 580,
         height: 250,
+        max: 35,
+        renderer: 'area',
+        stroke: true,
         series: [
             {
                 color: 'steelblue',
@@ -216,8 +254,14 @@
         ]
     });
 
-    var axes3 = new Rickshaw.Graph.Axis.Time({ graph: graph3 });
-    var yAxis3 = new Rickshaw.Graph.Axis.Y({ graph: graph3 });
+    var xAxis3 = new Rickshaw.Graph.Axis.Time({ graph: graph3 });
+    var yAxis3 = new Rickshaw.Graph.Axis.Y({
+        graph: graph3,
+        orientation: 'left',
+        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+        ticks: 8,
+        element: document.getElementById('y_axis3')
+    });
     var hoverDetail3 = new Rickshaw.Graph.HoverDetail({ graph: graph3 });
 
     graph3.render();
