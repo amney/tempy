@@ -1,7 +1,11 @@
 import os
 import sqlite3
+from threading import Thread
+import threading
 import time
 import thread
+from concurrent.futures import ThreadPoolExecutor
+
 import re
 import logging
 
@@ -16,9 +20,9 @@ except ImportError:
     GPIO = Mock()
 
 app = Flask(__name__)
-dir = os.path.dirname(os.path.realpath(__file__))
+filedir = os.path.dirname(os.path.realpath(__file__))
 
-logging.basicConfig(filename=os.path.join(dir, 'tempy.log'), level=logging.INFO)
+logging.basicConfig(filename=os.path.join(filedir, 'tempy.log'), level=logging.INFO)
 console = logging.StreamHandler()
 console.setLevel(logging.INFO)
 logging.getLogger('').addHandler(console)
@@ -29,13 +33,10 @@ class TemperatureSensor(object):
         self.device = device
 
     def get_current_temp(self):
-        try:
-            with open(self.device) as tfile:
-                text = tfile.read()
-            temperature = float(re.search('t=(\d+)', text).group(1))
-            return temperature / 1000
-        except IOError:
-            return -1
+        with open(self.device) as tfile:
+            text = tfile.read()
+        temperature = float(re.search('t=(\d+)', text).group(1))
+        return temperature / 1000
 
 
 class LEDArray(object):
@@ -78,7 +79,7 @@ def hello_world():
     one_week = now - (60 * 60 * 24 * 7)
     four_weeks = now - (60 * 60 * 24 * 7 * 4)
 
-    with sqlite3.connect(os.path.join(dir, 'temps.db')) as conn:
+    with sqlite3.connect(os.path.join(filedir, 'temps.db')) as conn:
         c = conn.cursor()
 
         c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
@@ -87,10 +88,10 @@ def hello_world():
         results_hour = [{'x': row[0], 'y': row[1]} for row in rows]
 
         c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
-                datetime((strftime('%s', datetime, 'unixepoch') / 900) * 900, 'unixepoch') ORDER BY datetime ASC""", (twenty_four_hours,))
+                datetime((strftime('%s', datetime, 'unixepoch') / 900) * 900, 'unixepoch') ORDER BY datetime ASC""",
+                  (twenty_four_hours,))
         rows = c.fetchall()
-        results_twenty_four_hours = [{'x': row[0], 'y': row[1]} for row in
-                rows]
+        results_twenty_four_hours = [{'x': row[0], 'y': row[1]} for row in rows]
 
         c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
                 strftime('%H', datetime, 'unixepoch') ORDER BY datetime ASC""", (one_week,))
@@ -111,53 +112,58 @@ def hello_world():
                            results_twenty_four_hours=results_twenty_four_hours,
                            results_one_week=results_one_week,
                            results_four_weeks=results_four_weeks)
+def run():
+    with threading.Lock() as lock:
+        print "hello"
+        logging.info('Starting temp polling loop')
+        temperature_sensor = TemperatureSensor(device="/sys/bus/w1/devices/28-0000055d0eac/w1_slave")
+        led_array = LEDArray()
 
-
-def temp_loop():
-    logging.info('Starting temp polling loop')
-    temperature_sensor = TemperatureSensor(device="/sys/bus/w1/devices/28-0000055d0eac/w1_slave")
-    led_array = LEDArray()
-
-    try:
-        while True:
-            temperature = temperature_sensor.get_current_temp()
-            with sqlite3.connect(os.path.join(dir, 'temps.db')) as conn:
-                c = conn.cursor()
-
+        try:
+            while True:
                 try:
-                    c.execute('CREATE TABLE temps (datetime integer, temp real)')
-                except sqlite3.OperationalError:
-                    pass
+                    temperature = temperature_sensor.get_current_temp()
+                except IOError:
+                    logging.warning("Couldn't pull current temp")
+                    temperature = 0
+                with sqlite3.connect(os.path.join(filedir, 'temps.db')) as conn:
+                    c = conn.cursor()
 
-                c.execute('INSERT INTO temps VALUES (?, ?)', (int(time.time()), temperature))
+                    try:
+                        c.execute('CREATE TABLE temps (datetime integer, temp real)')
+                    except sqlite3.OperationalError:
+                        pass
 
-                conn.commit()
+                    c.execute('INSERT INTO temps VALUES (?, ?)', (int(time.time()), temperature))
 
-            rounded_temp = int(temperature)
-            if 23 > temperature < 18:
-                led_array.blank()
-                led_array.red()
-                if (14 <= rounded_temp <= 16) or (25 <= rounded_temp <= 27):
-                    led_array.yellow_led_1()
-                if rounded_temp <= 13 or rounded_temp >= 28:
-                    led_array.yellow_led_1()
-                    led_array.yellow_led_2()
-                logging.warn("Temp at {}c -- outside stable band 18-23c".format(temperature))
-            else:
-                led_array.blank()
-                led_array.green()
-                if 20 <= rounded_temp <= 21:
-                    led_array.yellow_led_1()
-                if rounded_temp >= 22:
-                    led_array.yellow_led_1()
-                    led_array.yellow_led_2()
-                logging.info("Temp at {}c".format(temperature))
-            time.sleep(30)
-    except KeyboardInterrupt:
-        logging.info("Logging finished")
-        GPIO.cleanup()
+                    conn.commit()
+
+                rounded_temp = int(temperature)
+                if 23 > temperature < 18:
+                    led_array.blank()
+                    led_array.red()
+                    if (14 <= rounded_temp <= 16) or (25 <= rounded_temp <= 27):
+                        led_array.yellow_led_1()
+                    if rounded_temp <= 13 or rounded_temp >= 28:
+                        led_array.yellow_led_1()
+                        led_array.yellow_led_2()
+                    logging.warn("Temp at {}c -- outside stable band 18-23c".format(temperature))
+                else:
+                    led_array.blank()
+                    led_array.green()
+                    if 20 <= rounded_temp <= 21:
+                        led_array.yellow_led_1()
+                    if rounded_temp >= 22:
+                        led_array.yellow_led_1()
+                        led_array.yellow_led_2()
+                    logging.info("Temp at {}c".format(temperature))
+                time.sleep(30)
+        except KeyboardInterrupt:
+            logging.info("Logging finished")
+            GPIO.cleanup()
 
 
 if __name__ == '__main__':
-    thread.start_new_thread(temp_loop, ())
-    app.run(debug=True, host='0.0.0.0')
+    thread.start_new_thread(run, ())
+    app.run(debug=False, host='0.0.0.0')
+
