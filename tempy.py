@@ -81,25 +81,26 @@ def hello_world():
     with sqlite3.connect(os.path.join(dir, 'temps.db')) as conn:
         c = conn.cursor()
 
-        c.execute('SELECT * FROM temps WHERE datetime >= ?', (hour,))
+        c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
+                strftime('%M', datetime, 'unixepoch') ORDER BY datetime ASC""", (hour,))
         rows = c.fetchall()
-        results_hour = [{'x': row[0], 'y': row[1]} for row in rows if row[0] %
-                2 == 0]
+        results_hour = [{'x': row[0], 'y': row[1]} for row in rows]
 
-        c.execute('SELECT * FROM temps WHERE datetime >= ?', (twenty_four_hours,))
+        c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
+                datetime((strftime('%s', datetime, 'unixepoch') / 900) * 900, 'unixepoch') ORDER BY datetime ASC""", (twenty_four_hours,))
         rows = c.fetchall()
-        results_twenty_four_hours = [{'x': row[0], 'y': row[1]} for row in rows
-                if row[0] % 10 == 0]
+        results_twenty_four_hours = [{'x': row[0], 'y': row[1]} for row in
+                rows]
 
-        c.execute('SELECT * FROM temps WHERE datetime >= ?', (one_week,))
+        c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
+                strftime('%H', datetime, 'unixepoch') ORDER BY datetime ASC""", (one_week,))
         rows = c.fetchall()
-        results_one_week = [{'x': row[0], 'y': row[1]} for row in rows if
-                row[0] % 50 == 0]
+        results_one_week = [{'x': row[0], 'y': row[1]} for row in rows]
 
-        c.execute('SELECT * FROM temps WHERE datetime >= ?', (four_weeks, ))
+        c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
+                strftime('%H', datetime, 'unixepoch') ORDER BY datetime ASC""", (four_weeks, ))
         rows = c.fetchall()
-        results_four_weeks = [{'x': row[0], 'y': row[1]} for row in rows if
-                row[0] % 200 == 0]
+        results_four_weeks = [{'x': row[0], 'y': row[1]} for row in rows]
 
     return render_template('index.html',
                            results_hour=results_hour,
