@@ -71,9 +71,9 @@
 
     <!-- Main component for a primary marketing message or call to action -->
     <div class="jumbotron">
-        <h1 class="page-header">Tempy</h1>
-
-        <p>Currently brewing an Irish Stout</p>
+        <h1>Tempy</h1>
+        <h4>Currently brewing an Irish Stout</h4>
+        <br>
 
         <h3>Hour</h3>
 
@@ -116,7 +116,7 @@
         stroke: true,
         series: [
             {
-                color: 'lightblue',
+                color: 'steelblue',
                 data: data0,
                 name: 'Hour Temperature'
             }
@@ -128,7 +128,7 @@
         graph: graph0,
         orientation: 'left',
         tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-        ticks: 5,
+        ticks: 8,
         element: document.getElementById('y_axis')
     });
     var hoverDetail = new Rickshaw.Graph.HoverDetail({ graph: graph0 });
