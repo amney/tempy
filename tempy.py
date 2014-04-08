@@ -75,32 +75,44 @@ def tempy():
     four_weeks = now - (60 * 60 * 24 * 7 * 4)
 
     with sqlite3.connect(os.path.join(filedir, 'temps.db')) as conn:
+        # Set sqlite to return each row as a dictionary of x and y values
+        conn.row_factory = lambda cursor, row: {'x': row[0], 'y': row[1]}
         c = conn.cursor()
 
-        c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
-                strftime('%M', datetime, 'unixepoch') ORDER BY datetime ASC""", (hour,))
-        rows = c.fetchall()
-        results_hour = [{'x': row[0], 'y': row[1]} for row in rows]
+        # Select the last hours records to a minutely precision
+        c.execute("""
+                  SELECT * FROM temps WHERE datetime >= ? GROUP BY
+                  strftime('%M', datetime, 'unixepoch') ORDER BY datetime ASC
+                  """, (hour,))
+        results_hour = c.fetchall()
 
-        c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
-                datetime((strftime('%s', datetime, 'unixepoch') / 900) * 900, 'unixepoch') ORDER BY datetime ASC""",
-                  (twenty_four_hours,))
-        rows = c.fetchall()
-        results_twenty_four_hours = [{'x': row[0], 'y': row[1]} for row in rows]
+        # Select the last days records to a 15 minute precision
+        c.execute("""
+                  SELECT * FROM temps WHERE datetime >= ? GROUP BY
+                  datetime((strftime('%s', datetime, 'unixepoch') / 900) * 900, 'unixepoch')
+                  ORDER BY datetime ASC
+                  """, (twenty_four_hours,))
+        results_twenty_four_hours = c.fetchall()
 
-        c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
-                strftime('%d%H', datetime, 'unixepoch') ORDER BY datetime ASC""", (one_week,))
-        rows = c.fetchall()
-        results_one_week = [{'x': row[0], 'y': row[1]} for row in rows]
+        # Select the last weeks records to an hourly precision
+        c.execute("""
+                  SELECT * FROM temps WHERE datetime >= ? GROUP BY
+                  strftime('%d%H', datetime, 'unixepoch')
+                  ORDER BY datetime ASC
+                  """, (one_week,))
+        results_one_week = c.fetchall()
 
-        c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY 
-                strftime('%d%H', datetime, 'unixepoch') ORDER BY datetime
-                ASC""", (four_weeks,))
-        rows = c.fetchall()
-        results_four_weeks = [{'x': row[0], 'y': row[1]} for row in rows]
+        # Select the last months records to an hourly precision
+        c.execute("""
+                  SELECT * FROM temps WHERE datetime >= ? GROUP BY
+                  strftime('%d%H', datetime, 'unixepoch')
+                  ORDER BY datetime ASC
+                  """, (four_weeks,))
+        results_four_weeks = c.fetchall()
 
+        # Select the current temperature
         c.execute('SELECT * FROM temps ORDER BY datetime DESC LIMIT 1')
-        temp = c.fetchone()[1]
+        temp = c.fetchone()['y']
 
     return render_template('index.html',
                            temp=temp,
