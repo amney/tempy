@@ -89,12 +89,13 @@ def tempy():
         results_twenty_four_hours = [{'x': row[0], 'y': row[1]} for row in rows]
 
         c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
-                strftime('%H', datetime, 'unixepoch') ORDER BY datetime ASC""", (one_week,))
+                strftime('%d%H', datetime, 'unixepoch') ORDER BY datetime ASC""", (one_week,))
         rows = c.fetchall()
         results_one_week = [{'x': row[0], 'y': row[1]} for row in rows]
 
-        c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY
-                strftime('%H', datetime, 'unixepoch') ORDER BY datetime ASC""", (four_weeks, ))
+        c.execute("""SELECT * FROM temps WHERE datetime >= ? GROUP BY 
+                strftime('%d%H', datetime, 'unixepoch') ORDER BY datetime
+                ASC""", (four_weeks,))
         rows = c.fetchall()
         results_four_weeks = [{'x': row[0], 'y': row[1]} for row in rows]
 
@@ -156,6 +157,8 @@ def run():
                 logging.info("Temp at {}c".format(temperature))
 
             time.sleep(30)
+    except KeyboardInterrupt:
+        logging.info("Run thread caught KeyboardInterrupt")
     finally:
         logging.info("Logging finished")
         GPIO.cleanup()
